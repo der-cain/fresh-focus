@@ -30,7 +30,11 @@ export const MealList = ({ entries }: MealListProps) => {
   return (
     <div className="space-y-3 pb-24"> {/* Padding for FAB */}
       {entries.map((entry, idx) => (
-        <Card key={idx} className="flex justify-between items-center py-4 px-5">
+        <Card 
+            key={idx} 
+            className="flex justify-between items-center py-4 px-5 animate-stagger-fade-in"
+            style={{ animationDelay: `${idx * 0.05}s` }}
+        >
            <div className="flex items-center gap-3">
               <div className="bg-matcha-100 p-2 rounded-full">
                  <div className="w-2 h-2 bg-matcha-500 rounded-full"></div>

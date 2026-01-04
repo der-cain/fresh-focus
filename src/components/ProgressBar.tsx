@@ -32,9 +32,14 @@ export const ProgressBar = ({ current, max, label, className }: ProgressBarProps
       <div className="h-14 bg-oat-50 rounded-2xl border-4 border-white shadow-inner overflow-hidden relative">
         {/* The Liquid */}
         <div 
-            className={cn("h-full transition-all duration-1000 ease-out relative", colorClass)}
+            className={cn("h-full transition-all duration-1000 ease-out relative liquid-progress", colorClass)}
             style={{ width: `${percentage}%` }}
         >
+            {/* Wave effect layers */}
+            <div className="absolute top-0 right-0 h-full w-20 translate-x-1/2 opacity-30 animate-wave pointer-events-none">
+                <div className="h-full w-full bg-white blur-md rounded-full"></div>
+            </div>
+            
             {/* Gloss/Reflections for liquid effect */}
             <div className="absolute top-0 left-0 right-0 h-1/2 bg-white opacity-20 rounded-t-lg"></div>
         </div>

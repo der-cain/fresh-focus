@@ -94,7 +94,7 @@ export default function Dashboard() {
   }, [user, setTodayLog, syncStreak]);
 
   return (
-    <div className="min-h-screen bg-oat-200 pb-20 relative">
+    <div className="min-h-screen bg-oat-200 pb-20 relative page-fade-in">
         {/* Header */}
         <header className="bg-oat-200/90 backdrop-blur sticky top-0 z-10 px-6 py-4 flex justify-between items-center shadow-sm">
             <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export default function Dashboard() {
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2">
             <button 
                 onClick={() => setDrawerOpen(true)}
-                className="bg-loam-800 hover:bg-loam-900 text-white p-4 rounded-full shadow-xl transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                className="bg-loam-800 hover:bg-loam-900 text-white p-4 rounded-full shadow-xl transition-transform hover:scale-105 active:scale-95 flex items-center justify-center animate-pulse-subtle"
             >
                 <Plus className="w-8 h-8" />
             </button>
