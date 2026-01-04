@@ -96,7 +96,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-oat-200 pb-20 relative page-fade-in">
         {/* Header */}
-        <header className="bg-oat-200/90 backdrop-blur sticky top-0 z-10 px-6 py-4 flex justify-between items-center shadow-sm">
+        <header className="bg-oat-200/90 backdrop-blur sticky top-0 z-30 px-6 py-4 flex justify-between items-center shadow-sm">
             <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm text-sm font-bold text-orange-500">
                     <Flame className="w-4 h-4 fill-orange-500" />
@@ -108,12 +108,15 @@ export default function Dashboard() {
             </button>
         </header>
 
-        {/* Main Content */}
-        <main className="px-6 pt-6 max-w-md mx-auto">
-            <div className="mb-8">
+        {/* Sticky Calories Tank */}
+        <div className="sticky top-[72px] z-20 px-6 py-4 bg-oat-200/95 backdrop-blur-sm shadow-md">
+            <div className="max-w-md mx-auto">
                 <ProgressBar current={todayLog.totalCalories} max={dailyLimit} />
             </div>
+        </div>
 
+        {/* Main Content */}
+        <main className="px-6 pt-2 max-w-md mx-auto">
             <div className="mb-4">
                 <h3 className="text-lg font-bold text-loam-800">Today's Meals</h3>
             </div>

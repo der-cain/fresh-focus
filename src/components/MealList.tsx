@@ -1,15 +1,18 @@
 import { useRef, useEffect } from 'react';
 import type { FoodItem } from '../store/useStore';
-import { Card } from './Card';
-import { Clock } from 'lucide-react';
+import { useStore } from '../store/useStore';
+import { useAuth } from '../context/AuthContext';
+import { FirestoreService } from '../services/db';
 import { format } from 'date-fns';
+import { MealItem } from './MealItem';
 
 interface MealListProps {
   entries: FoodItem[];
 }
 
 export const MealList = ({ entries }: MealListProps) => {
-    
+  const { user } = useAuth();
+  const { removeFoodEntry } = useStore();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,6 +21,19 @@ export const MealList = ({ entries }: MealListProps) => {
         bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [entries]);
+
+  const handleDelete = async (entry: FoodItem) => {
+    if (!user || !entry.timestamp) return;
+    
+    // Optimistic UI update
+    removeFoodEntry(entry.timestamp);
+    
+    // Persist if not demo user
+    const isDemo = (user as any).providerId === 'demo';
+    if (!isDemo) {
+        await FirestoreService.deleteFoodEntry(user.uid, format(new Date(), 'yyyy-MM-dd'), entry);
+    }
+  };
 
   if (entries.length === 0) {
     return (
@@ -28,29 +44,14 @@ export const MealList = ({ entries }: MealListProps) => {
   }
 
   return (
-    <div className="space-y-3 pb-24"> {/* Padding for FAB */}
+    <div className="space-y-1 pb-24"> {/* Smaller spacing as MealItem handles its own margins */}
       {entries.map((entry, idx) => (
-        <Card 
-            key={idx} 
-            className="flex justify-between items-center py-4 px-5 animate-stagger-fade-in"
-            style={{ animationDelay: `${idx * 0.05}s` }}
-        >
-           <div className="flex items-center gap-3">
-              <div className="bg-matcha-100 p-2 rounded-full">
-                 <div className="w-2 h-2 bg-matcha-500 rounded-full"></div>
-              </div>
-              <div>
-                 <h4 className="font-bold text-loam-800">{entry.name}</h4>
-                 <div className="flex items-center gap-1 text-xs text-loam-500 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>{entry.timestamp ? format(new Date(entry.timestamp), 'HH:mm') : 'Just now'}</span>
-                 </div>
-              </div>
-           </div>
-           <div className="font-mono font-bold text-loam-700">
-              {entry.calories}
-           </div>
-        </Card>
+        <MealItem 
+            key={entry.timestamp || idx} 
+            entry={entry} 
+            index={idx}
+            onDelete={handleDelete}
+        />
       ))}
       <div ref={bottomRef} />
     </div>

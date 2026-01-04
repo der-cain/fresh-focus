@@ -47,11 +47,29 @@ export const FirestoreService = {
     } else {
       // Update existing
       const currentData = docSnap.data();
-      const newTotal = currentData.totalCalories + entry.calories;
+      const newTotal = (currentData.totalCalories || 0) + entry.calories;
       
       await updateDoc(logRef, {
         totalCalories: newTotal,
         entries: arrayUnion(entry)
+      });
+    }
+  },
+
+  // Delete Food Entry
+  async deleteFoodEntry(userId: string, date: string, entry: FoodItem) {
+    const logId = `${userId}_${date}`;
+    const logRef = doc(db, LOGS_COLLECTION, logId);
+    const docSnap = await getDoc(logRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const newEntries = data.entries.filter((e: FoodItem) => e.timestamp !== entry.timestamp);
+      const newTotal = newEntries.reduce((sum: number, e: FoodItem) => sum + e.calories, 0);
+
+      await updateDoc(logRef, {
+        entries: newEntries,
+        totalCalories: newTotal
       });
     }
   },

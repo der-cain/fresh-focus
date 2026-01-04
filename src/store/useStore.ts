@@ -31,6 +31,7 @@ interface AppState {
   
   setDailyLimit: (limit: number) => void;
   addFoodEntry: (entry: FoodItem) => void;
+  removeFoodEntry: (timestamp: string) => void;
   setTodayLog: (log: DailyLog) => void; // New Action
   resetDailyLog: () => void;
   incrementStreak: () => void;
@@ -66,13 +67,18 @@ export const useStore = create<AppState>((set) => ({
 
   // Add entry optimistically or from DB
   addFoodEntry: (entry) => set((state) => {
-    const newTotal = state.todayLog.totalCalories + entry.calories;
+    const newEntries = [...state.todayLog.entries, entry];
+    const newTotal = newEntries.reduce((sum, e) => sum + e.calories, 0);
     return {
-      todayLog: {
-        ...state.todayLog,
-        totalCalories: newTotal,
-        entries: [...state.todayLog.entries, entry]
-      }
+      todayLog: { ...state.todayLog, entries: newEntries, totalCalories: newTotal }
+    };
+  }),
+
+  removeFoodEntry: (timestamp) => set((state) => {
+    const newEntries = state.todayLog.entries.filter(e => e.timestamp !== timestamp);
+    const newTotal = newEntries.reduce((sum, e) => sum + e.calories, 0);
+    return {
+      todayLog: { ...state.todayLog, entries: newEntries, totalCalories: newTotal }
     };
   }),
 
