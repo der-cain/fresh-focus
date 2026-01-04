@@ -72,6 +72,21 @@ export const FirestoreService = {
          await setDoc(logRef, initialLog);
          return initialLog;
      }
-     return docSnap.data();
+     return docSnap.data() as DailyLog;
+  },
+
+  // Streak Persistence
+  async updateUserStreak(userId: string, streak: number, lastLogDate: string) {
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(userRef, {
+      'streak.current': streak,
+      'streak.lastLogDate': lastLogDate
+    });
+  },
+
+  async getUserProfile(userId: string) {
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    const snap = await getDoc(userRef);
+    return snap.exists() ? snap.data() : null;
   }
 };

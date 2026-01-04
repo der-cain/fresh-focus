@@ -22,9 +22,12 @@ export interface UserPreferences {
 }
 
 interface AppState {
-  dailyLimit: number; // Current effective limit
-  currentStreak: number;
+  streak: {
+      current: number;
+      lastLogDate: string | null;
+  };
   todayLog: DailyLog;
+  dailyLimit: number; // Current effective limit
   
   setDailyLimit: (limit: number) => void;
   addFoodEntry: (entry: FoodItem) => void;
@@ -35,7 +38,8 @@ interface AppState {
   
   // For Onboarding
   userPreferences: UserPreferences | null;
-  setUserPreferences: (prefs: UserPreferences) => void;
+  setUserPreferences: (prefs: Partial<UserPreferences>) => void;
+  syncStreak: (streak: number, lastLogDate: string) => void;
 }
 
 const INITIAL_LOG: DailyLog = {
@@ -45,17 +49,20 @@ const INITIAL_LOG: DailyLog = {
 };
 
 export const useStore = create<AppState>((set) => ({
+  streak: {
+      current: 0,
+      lastLogDate: null
+  },
   dailyLimit: 2000,
-  currentStreak: 0,
   todayLog: INITIAL_LOG,
   userPreferences: null,
 
   setDailyLimit: (limit) => set({ dailyLimit: limit }),
   
-  setUserPreferences: (prefs) => set({ 
-    userPreferences: prefs,
-    dailyLimit: prefs.dailyLimit 
-  }),
+  setUserPreferences: (prefs) => set((state) => ({
+      userPreferences: { ...state.userPreferences, ...prefs } as UserPreferences,
+      dailyLimit: prefs.dailyLimit ?? state.dailyLimit // Use nullish coalescing to keep existing limit if not provided
+  })),
 
   // Add entry optimistically or from DB
   addFoodEntry: (entry) => set((state) => {
@@ -73,7 +80,16 @@ export const useStore = create<AppState>((set) => ({
 
   resetDailyLog: () => set({ todayLog: INITIAL_LOG }),
   
-  incrementStreak: () => set((state) => ({ currentStreak: state.currentStreak + 1 })),
+  incrementStreak: () => set((state) => ({ 
+      streak: { 
+          ...state.streak,
+          current: state.streak.current + 1 
+      } 
+  })),
   
-  resetStreak: () => set({ currentStreak: 0 }),
+  syncStreak: (streak, lastLogDate) => set({ 
+      streak: { current: streak, lastLogDate } 
+  }),
+
+  resetStreak: () => set({ streak: { current: 0, lastLogDate: null } }),
 }));

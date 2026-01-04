@@ -1,43 +1,97 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
+import type { DailyLog } from '../store/useStore';
 import { useAuth } from '../context/AuthContext';
 import { FirestoreService } from '../services/db';
 import { format } from 'date-fns';
 import { ProgressBar } from '../components/ProgressBar';
 import { MealList } from '../components/MealList';
 import { AddItemDrawer } from '../components/AddItemDrawer';
-import { LogOut, Flame, Plus } from 'lucide-react';
+import { Flame, Plus, LogOut } from 'lucide-react';
+import { StreakCheckModal } from '../components/StreakCheckModal';
+import { StreakService } from '../services/streak';
+import type { StreakResult } from '../services/streak';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const { todayLog, dailyLimit, currentStreak } = useStore(); // TODO: We need a setTodayLog in store
-  const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const { todayLog, dailyLimit, streak, setTodayLog, syncStreak } = useStore();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [streakModalOpen, setStreakModalOpen] = useState(false);
+  const [streakResult, setStreakResult] = useState<StreakResult | null>(null);
+  
+  // Use a ref to prevent double-firing on dev strict mode
+  const checkedRef = useRef(false);
 
-  // Load data on mount
   useEffect(() => {
-    const loadData = async () => {
-        if (!user) return;
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-        
-        // 1. Get Daily Log
-        const log = await FirestoreService.ensureDailyLog(user.uid, todayStr);
-        if (log) {
-            // Need to sync store. For now, since addFoodEntry adds incrementally, 
-            // we might want a 'setEntireLog' action. 
-            // For MVP simplicity let's just assume we reload or fetch fresh.
-            // Actually, we need to update the store with fetched data.
-            // Let's add 'setTodayLog' to store in next step or now. 
-            // For now, I will assume the store is fresh or persisted incorrectly from previous session.
-            // Ideally we fetch and SET the store state.
-             useStore.setState({ todayLog: log as any }); // Type assertion for MVP simplicity
-        }
-        
-        // 2. Get User Prefs (for Daily Limit) if needed
-        // For MVP assuming default or previously set. 
-        // Real app would fetch user profile here.
+    if (!user) return;
+    const dateStr = format(new Date(), 'yyyy-MM-dd');
+    
+    const initData = async () => {
+      try {
+       // 1. Get Today's Log
+       let log: DailyLog | null = null;
+       const isDemo = (user as any).providerId === 'demo';
+
+       if (isDemo) {
+           // For demo, we just use local state or an empty log if not found in memory? 
+           // Since we can't persist to DB, we can't really "get" the log unless we use localStorage or store.
+           // For now, let's create a fresh log for demo user on every reload (or rely on store state if preserved).
+           // Actually, best to just return a fresh log.
+           log = { date: dateStr, totalCalories: 0, entries: [] };
+       } else {
+           log = await FirestoreService.getDailyLog(user.uid, dateStr);
+           if (!log) {
+               log = await FirestoreService.ensureDailyLog(user.uid, dateStr);
+           }
+       }
+       setTodayLog(log as DailyLog);
+
+       // 2. Check Streak (Only once per session/mount)
+       if (!checkedRef.current) {
+          checkedRef.current = true;
+          
+          let lastLog = null;
+          let current = 0;
+
+          if (isDemo) {
+              // Demo user: Always start fresh or simulate specific state?
+              // To verifying the "Reset" modal, we want it to act like a user with NO history (or old history).
+              // Let's assume defaults (null/0).
+          } else {
+              const profile = await FirestoreService.getUserProfile(user.uid);
+              lastLog = profile?.streak?.lastLogDate || null;
+              current = profile?.streak?.current || 0;
+          }
+
+          console.log('[Dashboard] Steak Data:', { lastLog, current });
+          const result = StreakService.calculateStreak(lastLog, current);
+          console.log('[Dashboard] Calc Result:', result);
+          
+          if (result.status !== 'same_day' || !lastLog) {
+              setStreakResult(result);
+              setStreakModalOpen(true);
+              
+              // Only persist for real users
+              if (!isDemo) {
+                if (result.status === 'lost') {
+                    await FirestoreService.updateUserStreak(user.uid, 0, dateStr);
+                } else if (result.status === 'kept') {
+                    await FirestoreService.updateUserStreak(user.uid, result.streak, dateStr);
+                }
+              }
+              // Always sync local
+              syncStreak(result.streak === 0 ? 0 : result.streak, dateStr);
+          } else {
+              syncStreak(current, lastLog || dateStr);
+          }
+       }
+      } catch (err) {
+          console.error("[Dashboard] Error initializing:", err);
+      }
     };
-    loadData();
-  }, [user]);
+    
+    initData();
+  }, [user, setTodayLog, syncStreak]);
 
   return (
     <div className="min-h-screen bg-oat-200 pb-20 relative">
@@ -46,7 +100,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm text-sm font-bold text-orange-500">
                     <Flame className="w-4 h-4 fill-orange-500" />
-                    <span>{currentStreak} Day Streak</span>
+                    <span>{streak.current} Day Streak</span>
                 </div>
             </div>
             <button onClick={logout} className="p-2 hover:bg-oat-300 rounded-full transition-colors">
@@ -77,7 +131,18 @@ export default function Dashboard() {
             </button>
         </div>
 
-        <AddItemDrawer isOpen={isDrawerOpen} onClose={() => setDrawerOpen(false)} />
+        <AddItemDrawer 
+        isOpen={drawerOpen} 
+        onClose={() => setDrawerOpen(false)} 
+      />
+
+      {streakResult && (
+        <StreakCheckModal 
+            isOpen={streakModalOpen}
+            onClose={() => setStreakModalOpen(false)}
+            result={streakResult}
+        />
+      )}
     </div>
   );
 }

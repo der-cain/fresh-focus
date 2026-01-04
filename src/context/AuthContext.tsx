@@ -36,7 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toJSON: () => ({}),
       phoneNumber: null,
       photoURL: null,
-    } as User);
+      providerId: 'demo',
+    } as unknown as User);
   };
 
   useEffect(() => {
