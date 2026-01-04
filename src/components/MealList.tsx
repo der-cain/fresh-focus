@@ -44,7 +44,7 @@ export const MealList = ({ entries }: MealListProps) => {
   }
 
   return (
-    <div className="space-y-1 pb-24"> {/* Smaller spacing as MealItem handles its own margins */}
+    <div className="pb-24">
       {entries.map((entry, idx) => (
         <MealItem 
             key={entry.timestamp || idx} 

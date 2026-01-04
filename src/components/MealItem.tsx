@@ -40,11 +40,11 @@ export const MealItem = ({ entry, onDelete, index }: MealItemProps) => {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl mb-3">
+    <div className="relative mb-4">
       {/* Background Action (Delete) */}
       <div 
         className={cn(
-            "absolute inset-0 bg-persimmon-500 flex items-center justify-end px-6 transition-opacity",
+            "absolute inset-0 bg-persimmon-500 rounded-3xl flex items-center justify-end px-6 transition-opacity",
             swiped ? "opacity-100" : "opacity-0"
         )}
       >
