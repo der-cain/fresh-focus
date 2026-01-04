@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-oat-200 text-loam-700 font-sans antialiased;
+  }
+}
