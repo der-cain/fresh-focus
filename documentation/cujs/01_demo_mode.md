@@ -15,4 +15,4 @@ Access the application dashboard and features without creating a permanent accou
 - The user is redirected to `/dashboard`.
 - A temporary "demo" user session is initiated.
 - The Dashboard display today's (empty) calorie log and the "Daily Balance" progress bar.
-- If it's a new day/session, a Streak Reset or Streak Check modal may appear.
+- Since it's a new day/session, a Streak Reset or Streak Check modal should appear.
